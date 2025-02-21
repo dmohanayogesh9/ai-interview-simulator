@@ -1,1 +1,1 @@
-AI INTERVIEW SIMULATOR
+Ai Interview Simulator
