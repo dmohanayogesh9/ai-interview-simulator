@@ -1,25 +1,41 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+from llamafactory.chat import ChatModel
+from llamafactory.extras.misc import torch_gc
+
+args = dict(
+  model_name_or_path="meta-llama/Llama-3.2-1B-Instruct", # use bnb-4bit-quantized Llama-3-8B-Instruct model
+  adapter_name_or_path="C:\\Users\\kkris\\Project Ai interviewer\\adapter\\content\\LLaMA-Factory\\llama3_lora",                        # load the saved LoRA adapters
+  template="llama3",                                         # same to the one in training
+  finetuning_type="lora",                                    # same to the one in training
+)
+chat_model = ChatModel(args)
 app = Flask(__name__)
+CORS(app)  # Enable CORS for frontend-backend communication
 
-role = None  # Global variable to store the selected role
+# Endpoint to handle user messages
+@app.route('/reply', methods=['POST'])
+def reply():
+    user_message = request.json.get('message')
 
-@app.route("/")
-def index():
-    return render_template("index.html", role=role)  # Pass role to frontend
+    # Customize this logic to generate the reply
+    reply = generate_reply(user_message)
+    print(reply)
+    # Send the reply back to the frontend
+    return jsonify({'reply': reply})
 
-@app.route('/role', methods=['POST'])
-def upload_role():
-    global role
-    data = request.get_json()
-    role = data.get("role")  
+# Function to generate a reply (you can modify this)
+def generate_reply(user_message):
+    # Ensure messages is always a list
+    messages = [{"role": "user", "content": user_message}]
 
-    print(f"Selected Role: {role}")  # Debugging
+    response = ""
+    for new_text in chat_model.stream_chat(messages):
+        response += new_text
 
-    if not role:
-        return jsonify({"msg": False}), 400
+    return response
 
-    return jsonify({"flag": True})  # Respond to frontend
 
-if __name__ == "__main__":
+# Start the server
+if __name__ == '__main__':
     app.run(debug=True)
