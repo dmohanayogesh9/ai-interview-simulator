@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f1f1;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #chat-container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            background-color: #007bff;
+            padding: 15px;
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        #messages {
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #fafafa;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background-color: #d1e7ff;
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+
+        .ai-message {
+            background-color: #e2e8f0;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+
+        .input-container {
+            display: flex;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #ddd;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007bff;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* Scrollbar styling */
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #messages::-webkit-scrollbar-thumb {
+            background-color: #007bff;
+            border-radius: 10px;
+        }
+
+        #messages::-webkit-scrollbar-track {
+            background-color: #f1f1f1;
+        }
+
+        /* Animation for messages */
+        .message {
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chat-container">
+        <div id="header">
+            AI Chat Assistant
+        </div>
+        <div id="messages"></div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type a message..." />
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to send a message and get a response from the backend
+        document.getElementById('send-btn').addEventListener('click', async () => {
+            const userInput = document.getElementById('user-input').value;
+            if (userInput.trim() === "") return; // Do nothing if input is empty
+
+            // Disable the button while waiting for the response
+            document.getElementById('send-btn').disabled = true;
+
+            // Display user's message in the chat
+            addMessage(userInput, 'user');
+
+            // Send the message to the backend
+            const response = await fetch('http://127.0.0.1:5000/reply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userInput })
+            });
+
+            const data = await response.json();
+            const aiReply = data.reply;
+
+            // Display AI's response
+            addMessage(aiReply, 'ai');
+
+            // Re-enable the button and clear the input field
+            document.getElementById('send-btn').disabled = false;
+            document.getElementById('user-input').value = ''; // Clear the input field
+        });
+
+        // Function to add a message to the chat
+        function addMessage(content, sender) {
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message');
+            messageContainer.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+            messageContainer.textContent = content;
+            document.getElementById('messages').appendChild(messageContainer);
+
+            // Scroll to the bottom of the chat
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+
+</body>
+</html>
